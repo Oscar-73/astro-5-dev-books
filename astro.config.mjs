@@ -3,11 +3,15 @@ import { defineConfig, envField } from "astro/config";
 
 import tailwind from "@astrojs/tailwind";
 
+import vercel from "@astrojs/vercel";
+
 // https://astro.build/config
 export default defineConfig({
   // Esto nos inicializará un servidor que solo lo usará cuando lo necesite (componentes dinámicos, server:defer).
   output: "server",
+
   integrations: [tailwind()],
+
   // Esto nos permite leer las variables de entorno y tiparlas como queramos.
   env: {
     schema: {
@@ -22,4 +26,6 @@ export default defineConfig({
       }),
     },
   },
+
+  adapter: vercel(),
 });
