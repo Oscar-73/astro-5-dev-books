@@ -1,0 +1,59 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { getCollection, render } from "astro:content";
+import { SHOW_BUY_BUTTON } from "astro:env/server"; // Variable de entorno.
+import BookScore from "../../components/BookScore.astro";
+import BuyButton from "../../components/BuyButton.astro";
+
+// Función de Astro que devuelve un array con todas las rutas que queremos que respondan con algo y qué información debe tener cada una.
+export async function getStaticPaths() {
+  const books = await getCollection("books");
+
+  return books.map((book) => ({
+    params: { id: book.slug },
+    props: { book },
+  }));
+}
+
+const { book } = Astro.props;
+const { data, slug } = book;
+const { title, author, img, readtime, description, buy } = data;
+
+const { Content } = await render(book); // Renderizamos el contenido de la colección (Markdown, MDX, etc...).
+
+export const prerender = true; // De esta forma le indicamos a esta página que siga siendo estática aunque tenga una parte dinámica (isla de servidor).
+---
+
+<Layout title={`${title} - Dev Books`}>
+  <div class="flex gap-12">
+    <aside class="flex flex-col items-center gap-4">
+      <a href="/" class="hover:underline opacity-70">⬅️ Volver atrás</a>
+      <img
+        transition:name={`img-${slug}`}
+        class="rounded w-72 h-auto"
+        src={`/${img}`}
+        alt={title}
+      />
+
+      <!-- Con "server:defer" hacemos que este componente sea dinámico, es decir, que su valor varíe cada vez que se llame al endpoint. Que se renderize en el servidor. -->
+      <BookScore server:defer id={slug}>
+        <!-- Gracias a los fallbacks podemos renderizar otra cosa mientras esperamos a que cargue la API. -->
+        <span slot="fallback" class="text-xs opacity-70"
+          >Cargando puntuación...</span
+        >
+      </BookScore>
+
+      <!-- Botón de compra dinámico que cambie de texto/enlaces según la ubicación del usuario. -->
+      {SHOW_BUY_BUTTON && <BuyButton server:defer buy={buy} />}
+    </aside>
+
+    <main class="max-w-3xl">
+      <h1 transition:name={`title-${slug}`} class="text-4xl font-bold mb-4">
+        {title}
+      </h1>
+      <div class="prose prose-invert">
+        <Content />
+      </div>
+    </main>
+  </div>
+</Layout>
